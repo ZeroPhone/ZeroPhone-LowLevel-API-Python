@@ -8,7 +8,6 @@ except ImportError:
 
 setup(
     name='zerophone_hw',
-    packages = ['zerophone_hw'],
     py_modules=['zerophone_hw'],
     version="0.1.0",
     description='ZeroPhone API library',
