@@ -6,7 +6,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = "0.1.2"
+version = "0.2.0"
 
 setup(
     name='zerophone_hw',
