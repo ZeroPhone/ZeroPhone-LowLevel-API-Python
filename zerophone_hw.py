@@ -31,7 +31,7 @@ def is_charging():
         gpio.setup(chg_sense_gpio, gpio.IN)
         return bool(gpio.input(chg_sense_gpio))
     else:
-        raise NotImplementedException("Version not supported!")
+        raise NotImplemented("Version not supported!")
 
 
 class USB_DCDC():
@@ -49,7 +49,7 @@ class USB_DCDC():
         if self.hw_v == "gamma":
             return 510
         else:
-            raise NotImplementedException("Hardware version not supported!")
+            raise NotImplemented("Hardware version not supported!")
 
     def set_state(self, state):
         if not self.gpio_exported:
@@ -61,7 +61,7 @@ class USB_DCDC():
         elif self.switch_types[self.hw_v] == "gpio":
             gpio.set(self.gpio_num, state)
         else:
-            raise NotImplementedException("DC-DC switch type not supported!")
+            raise NotImplemented("DC-DC switch type not supported!")
 
     def on(self):
         self.set_state(True)
@@ -85,7 +85,7 @@ class GSM_Modem():
     def set_gpio_nums(self):
         self.gpios = {name: copy(self.gpio_dict) for name in self.gpio_names}
         if self.hw_v not in self.gpio_nums:
-            raise NotImplementedException("Hardware version not supported!")
+            raise NotImplemented("Hardware version not supported!")
         gpio_nums = self.gpio_nums[self.hw_v]
         for name, num in gpio_nums.items():
             self.gpios[name]["num"] = num
@@ -127,7 +127,7 @@ class RGB_LED():
         if version in self.led_types:
             return self.led_types[version]
         else:
-            raise NotImplementedException("Hardware version not supported!")
+            raise NotImplemented("Hardware version not supported!")
 
     def setup(self):
         if self.led_type in ["gpio", "gpio_inverted"]:
@@ -139,7 +139,7 @@ class RGB_LED():
         if self.hw_v == "gamma":
             return (498, 496, 497)
         else:
-            raise NotImplementedException("Hardware version not supported!")
+            raise NotImplemented("Hardware version not supported!")
 
     def set_color(self, color_str):
         try:
@@ -159,7 +159,7 @@ class RGB_LED():
                 if self.led_type == "gpio_inverted": gpio_state = not gpio_state
                 gpio.set(gpio_num, gpio_state)
         else:
-            raise NotImplementedException("LED control type not supported!")
+            raise NotImplemented("LED control type not supported!")
 
     def __getattr__(self, name):
         if name in self.color_mapping:
