@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import argparse
 
 __all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
 __version__ = '0.3.0'
@@ -34,12 +35,13 @@ def is_charging():
         raise NotImplemented("Version not supported!")
 
 
-class USB_DCDC():
+class USB_DCDC(object):
     gpio_exported = False
     gpio_state = None
 
     switch_types = {
-        "gamma": "gpio_inverted"}
+        "gamma": "gpio_inverted"
+    }
 
     def __init__(self):
         self.hw_v = get_hw_version_str()
@@ -73,13 +75,14 @@ class USB_DCDC():
         self.set_state(not self.gpio_state)
 
 
-class GSM_Modem():
+class GSM_Modem(object):
     gpio_dict = {"exported": False, "state": None, "num": None}
     gpio_names = ["ring", "reset", "dtr"]
     gpio_nums = {"gamma": {"ring": 501, "dtr": 500, "reset": 502}}
 
     def __init__(self):
         self.hw_v = get_hw_version_str()
+        self.gpios = {}
         self.set_gpio_nums()
 
     def set_gpio_nums(self):
@@ -107,7 +110,7 @@ class GSM_Modem():
     # TODO: add "get_ring_state" and "get_dtr_state" high-level functions
 
 
-class RGB_LED():
+class RGB_LED(object):
     color_mapping = {
         "white": (255, 255, 255),
         "red": (255, 0, 0),
@@ -137,7 +140,7 @@ class RGB_LED():
     def get_rgb_gpios(self):
         # returns GPIOs for red, green, blue
         if self.hw_v == "gamma":
-            return (498, 496, 497)
+            return 498, 496, 497
         else:
             raise NotImplemented("Hardware version not supported!")
 
@@ -145,7 +148,7 @@ class RGB_LED():
         try:
             self.set_rgb(*self.color_mapping[color_str])
         except KeyError:
-            raise ArgumentError("Color {} not found in color mapping!".format(color_str))
+            raise ValueError("Color {} not found in color mapping!".format(color_str))
 
     def set_rgb(self, *colors):
         if len(colors) != 3 or any([type(color) != int for color in colors]):
@@ -156,7 +159,8 @@ class RGB_LED():
             gpios = self.get_rgb_gpios()
             for i, gpio_num in enumerate(gpios):
                 gpio_state = colors[i] > 0  # Only 0 and 255 are respected
-                if self.led_type == "gpio_inverted": gpio_state = not gpio_state
+                if self.led_type == "gpio_inverted":
+                    gpio_state = not gpio_state
                 gpio.set(gpio_num, gpio_state)
         else:
             raise NotImplemented("LED control type not supported!")
@@ -167,8 +171,4 @@ class RGB_LED():
 
 
 if __name__ == "__main__":
-    led = RGB_LED()
-    dcdc = USB_DCDC()
-    while True:
-        print(is_charging())
-        sleep(1)
+    parser = argparse.ArgumentParser
