@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 import argparse
 
-__all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
+__all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC_Gamma', "GSM_Modem_Gamma"]
 __version__ = '0.3.0'
 
 import sys
@@ -26,44 +26,37 @@ def get_hw_version_str():
 
 
 def is_charging():
-    hw_v = get_hw_version_str()
-    if hw_v == "gamma":
-        chg_sense_gpio = 503
-        gpio.setup(chg_sense_gpio, gpio.IN)
-        return bool(gpio.input(chg_sense_gpio))
-    else:
-        raise NotImplemented("Version not supported!")
+    chg_sense_gpio = 503
+    gpio.setup(chg_sense_gpio, gpio.IN)
+    return bool(gpio.input(chg_sense_gpio))
 
 
 class USB_DCDC(object):
+    def __new__(cls, *args, **kwargs):
+        if get_hw_version_str() == "gamma":
+            return USB_DCDC_Gamma(*args, **kwargs)
+
+
+class USB_DCDC_Gamma(USB_DCDC):
     gpio_exported = False
     gpio_state = None
 
-    switch_types = {
-        "gamma": "gpio_inverted"
-    }
-
-    def __init__(self):
-        self.hw_v = get_hw_version_str()
+    def __init__(self, gpio_inverted=True):
+        self.gpio_inverted = gpio_inverted
         self.gpio_num = self.get_gpio_num()
 
     def get_gpio_num(self):
-        if self.hw_v == "gamma":
-            return 510
-        else:
-            raise NotImplemented("Hardware version not supported!")
+        return 510
 
     def set_state(self, state):
         if not self.gpio_exported:
             gpio.setup(self.gpio_num, gpio.OUT)
             self.gpio_exported = True
         self.gpio_state = state
-        if self.switch_types[self.hw_v] == "gpio_inverted":
+        if self.gpio_inverted:
             gpio.set(self.gpio_num, not state)
-        elif self.switch_types[self.hw_v] == "gpio":
-            gpio.set(self.gpio_num, state)
         else:
-            raise NotImplemented("DC-DC switch type not supported!")
+            gpio.set(self.gpio_num, state)
 
     def on(self):
         self.set_state(True)
@@ -76,6 +69,12 @@ class USB_DCDC(object):
 
 
 class GSM_Modem(object):
+    def __new__(cls, *args, **kwargs):
+        if get_hw_version_str() == "gamma":
+            return GSM_Modem_Gamma(*args, **kwargs)
+
+
+class GSM_Modem_Gamma(GSM_Modem):
     gpio_dict = {"exported": False, "state": None, "num": None}
     gpio_names = ["ring", "reset", "dtr"]
     gpio_nums = {"gamma": {"ring": 501, "dtr": 500, "reset": 502}}
@@ -111,6 +110,12 @@ class GSM_Modem(object):
 
 
 class RGB_LED(object):
+    def __new__(cls, *args, **kwargs):
+        if get_hw_version_str() == "gamma":
+            return RGB_LED_Gamma(*args, **kwargs)
+
+
+class RGB_LED_Gamma(RGB_LED):
     color_mapping = {
         "white": (255, 255, 255),
         "red": (255, 0, 0),
@@ -171,4 +176,4 @@ class RGB_LED(object):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser
+    pass
