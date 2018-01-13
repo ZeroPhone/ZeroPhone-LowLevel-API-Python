@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
-__all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC']
+__all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
 __version__ = '0.1'
 
 import sys
 import gpio
+from time import sleep
+from copy import copy
+
 sys.excepthook = sys.__excepthook__ 
 #GPIO library workaround - it sets excepthook 
 #to PDB debug, that's good but it's going to 
@@ -65,6 +68,40 @@ class USB_DCDC():
     def toggle(self):
         self.set_state(not self.gpio_state)
 
+
+class GSM_Modem():
+
+    gpio_dict = {"exported":False, "state":None, "num":None}
+    gpio_names = ["ring", "reset", "dtr"]
+    gpio_nums = { "gamma":{"ring":501, "dtr":500, "reset":502} }
+
+    def __init__(self):
+        self.hw_v = get_hw_version_str()
+        self.set_gpio_nums()
+
+    def set_gpio_nums(self):
+        self.gpios = {name:copy(self.gpio_dict) for name in self.gpio_names}
+        if self.hw_v not in self.gpio_nums:
+            raise NotImplementedException("Hardware version not supported!")
+        gpio_nums = self.gpio_nums[self.hw_v]
+        for name, num in gpio_nums.items():
+            self.gpios[name]["num"] = num
+
+    def set_state(self, name, state):
+        g = self.gpios[name]
+        gpio_num = g["num"]
+        if not g["exported"]:
+            gpio.setup(gpio_num, gpio.OUT)
+            g["exported"] = True
+        g["state"] = state
+        gpio.set(gpio_num, state)
+
+    def reset(self):
+        self.set_state("reset", False)
+        sleep(1)
+        self.set_state("reset", True)
+
+    #TODO: add "get_ring_state" and "get_dtr_state" high-level functions
 
 class RGB_LED():
     color_mapping = {
@@ -127,7 +164,6 @@ class RGB_LED():
 if __name__ == "__main__":
     led = RGB_LED()
     dcdc = USB_DCDC()
-    from time import sleep
     while True:
         print(is_charging())
         sleep(1)
