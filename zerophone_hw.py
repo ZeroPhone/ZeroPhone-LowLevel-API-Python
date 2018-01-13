@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __all__ = ['get_hw_version_str', 'is_charging', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.1'
+__version__ = '0.3.0'
 
 import sys
 import gpio
