@@ -18,6 +18,6 @@ setup(
     install_requires=[
         "gpio"
     ],
-    url = 'https://github.com/ZeroPhone/Zerophone-API-Python',
-    download_url = 'https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version)
+    url='https://github.com/ZeroPhone/Zerophone-API-Python',
+    download_url='https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version)
 )
