@@ -19,5 +19,6 @@ setup(
         "gpio"
     ],
     url='https://github.com/ZeroPhone/Zerophone-API-Python',
-    download_url='https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version)
+    download_url='https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version),
+    entry_points={"console_scripts": ["zerophone_hw = zerophone_hw:main"]},
 )
