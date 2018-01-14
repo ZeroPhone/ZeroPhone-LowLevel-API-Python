@@ -37,18 +37,19 @@ class USB_DCDC(object):
             return USB_DCDC_Gamma(*args, **kwargs)
 
 
-class USB_DCDC_Gamma(USB_DCDC):
+class USB_DCDC_Gamma(object):
+    """USB DCDC control for gamma board"""
     gpio_exported = False
     gpio_state = None
 
     def __init__(self, gpio_inverted=True):
         self.gpio_inverted = gpio_inverted
-        self.gpio_num = self.get_gpio_num()
+        self.gpio_num = self._get_gpio_num()
 
-    def get_gpio_num(self):
+    def _get_gpio_num(self):
         return 510
 
-    def set_state(self, state):
+    def _set_state(self, state):
         if not self.gpio_exported:
             gpio.setup(self.gpio_num, gpio.OUT)
             self.gpio_exported = True
@@ -59,13 +60,16 @@ class USB_DCDC_Gamma(USB_DCDC):
             gpio.set(self.gpio_num, state)
 
     def on(self):
-        self.set_state(True)
+        """Turns the DCDC on"""
+        self._set_state(True)
 
     def off(self):
-        self.set_state(False)
+        """Turns the DCDC off"""
+        self._set_state(False)
 
     def toggle(self):
-        self.set_state(not self.gpio_state)
+        """Toggles DCDC state"""
+        self._set_state(not self.gpio_state)
 
 
 class GSM_Modem(object):
@@ -74,7 +78,8 @@ class GSM_Modem(object):
             return GSM_Modem_Gamma(*args, **kwargs)
 
 
-class GSM_Modem_Gamma(GSM_Modem):
+class GSM_Modem_Gamma(object):
+    """SIM800L modem control for the gamma board"""
     gpio_dict = {"exported": False, "state": None, "num": None}
     gpio_names = ["ring", "reset", "dtr"]
     gpio_nums = {"gamma": {"ring": 501, "dtr": 500, "reset": 502}}
@@ -82,9 +87,9 @@ class GSM_Modem_Gamma(GSM_Modem):
     def __init__(self):
         self.hw_v = get_hw_version_str()
         self.gpios = {}
-        self.set_gpio_nums()
+        self._set_gpio_nums()
 
-    def set_gpio_nums(self):
+    def _set_gpio_nums(self):
         self.gpios = {name: copy(self.gpio_dict) for name in self.gpio_names}
         if self.hw_v not in self.gpio_nums:
             raise NotImplemented("Hardware version not supported!")
@@ -92,7 +97,7 @@ class GSM_Modem_Gamma(GSM_Modem):
         for name, num in gpio_nums.items():
             self.gpios[name]["num"] = num
 
-    def set_state(self, name, state):
+    def _set_state(self, name, state):
         g = self.gpios[name]
         gpio_num = g["num"]
         if not g["exported"]:
@@ -102,9 +107,9 @@ class GSM_Modem_Gamma(GSM_Modem):
         gpio.set(gpio_num, state)
 
     def reset(self):
-        self.set_state("reset", False)
+        self._set_state("reset", False)
         sleep(1)
-        self.set_state("reset", True)
+        self._set_state("reset", True)
 
     # TODO: add "get_ring_state" and "get_dtr_state" high-level functions
 
@@ -115,7 +120,8 @@ class RGB_LED(object):
             return RGB_LED_Gamma(*args, **kwargs)
 
 
-class RGB_LED_Gamma(RGB_LED):
+class RGB_LED_Gamma(object):
+    """Controls the RGB led"""
     color_mapping = {
         "white": (255, 255, 255),
         "red": (255, 0, 0),
@@ -128,21 +134,20 @@ class RGB_LED_Gamma(RGB_LED):
 
     def __init__(self):
         self.hw_v = get_hw_version_str()
-        self.led_type = self.get_led_type(self.hw_v)
-        self.setup()
+        self.led_type = self._get_led_type(self.hw_v)
 
-    def get_led_type(self, version):
+    def _get_led_type(self, version):
         if version in self.led_types:
             return self.led_types[version]
         else:
             raise NotImplemented("Hardware version not supported!")
 
-    def setup(self):
+    def _setup(self):
         if self.led_type in ["gpio", "gpio_inverted"]:
-            for gpio_num in self.get_rgb_gpios():
+            for gpio_num in self._get_rgb_gpios():
                 gpio.setup(gpio_num, gpio.HIGH)
 
-    def get_rgb_gpios(self):
+    def _get_rgb_gpios(self):
         # returns GPIOs for red, green, blue
         if self.hw_v == "gamma":
             return 498, 496, 497
@@ -150,18 +155,25 @@ class RGB_LED_Gamma(RGB_LED):
             raise NotImplemented("Hardware version not supported!")
 
     def set_color(self, color_str):
+        """Sets the color of the led from a string"""
         try:
             self.set_rgb(*self.color_mapping[color_str])
         except KeyError:
             raise ValueError("Color {} not found in color mapping!".format(color_str))
 
+    def off(self):
+        """Turns the led off"""
+        self.set_rgb(0, 0, 0)
+
     def set_rgb(self, *colors):
+        """Sets the color of the led from RGB values [0-255] range"""
+        colors = [int(c) for c in colors]
         if len(colors) != 3 or any([type(color) != int for color in colors]):
             raise TypeError("set_rgb expects three integer arguments - red, green and blue values!")
         if any([color < 0 or color > 255 for color in colors]):
             raise ValueError("set_rgb expects integers in range from 0 to 255!")
         if self.led_type in ["gpio", "gpio_inverted"]:  # HW versions that have GPIO-controlled LED
-            gpios = self.get_rgb_gpios()
+            gpios = self._get_rgb_gpios()
             for i, gpio_num in enumerate(gpios):
                 gpio_state = colors[i] > 0  # Only 0 and 255 are respected
                 if self.led_type == "gpio_inverted":
@@ -175,5 +187,31 @@ class RGB_LED_Gamma(RGB_LED):
             return lambda x=name: self.set_color(x)
 
 
+def add_object_subparser(obj, name, sub_parsers):
+    callable_functions = [func for func in dir(obj) if callable(getattr(obj, func)) and not func.startswith('_')]
+
+    object_help = str(obj.__doc__)
+    functions_help = '\n'.join(['\t{}\t{}'.format(func, getattr(obj, func).__doc__) for func in callable_functions if
+                                getattr(obj, func).__doc__ is not None])
+    custom_subparser = sub_parsers.add_parser(
+        name,
+        description="{}\n{}".format(object_help, functions_help),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    custom_subparser.add_argument('command', type=str, choices=callable_functions)
+    custom_subparser.add_argument('params', type=str, nargs='*')
+    custom_subparser.set_defaults(__obj=obj)
+
+
 if __name__ == "__main__":
-    pass
+    parser = argparse.ArgumentParser(prog='zerophone_hw', description='Zerophone Hardware Command Line Interface')
+    subparsers = parser.add_subparsers()
+
+    add_object_subparser(RGB_LED(), 'led', subparsers)
+    add_object_subparser(USB_DCDC(), 'dcdc', subparsers)
+    add_object_subparser(GSM_Modem(), 'modem', subparsers)
+
+    args = parser.parse_args()
+    if hasattr(args.__obj, '_setup'):
+        getattr(args.__obj, '_setup')()
+    getattr(args.__obj, args.command)(*args.params)
