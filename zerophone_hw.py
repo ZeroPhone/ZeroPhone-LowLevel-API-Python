@@ -203,15 +203,17 @@ def add_object_subparser(obj, name, sub_parsers):
     custom_subparser.set_defaults(__obj=obj)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(prog='zerophone_hw', description='Zerophone Hardware Command Line Interface')
     subparsers = parser.add_subparsers()
-
     add_object_subparser(RGB_LED(), 'led', subparsers)
     add_object_subparser(USB_DCDC(), 'dcdc', subparsers)
     add_object_subparser(GSM_Modem(), 'modem', subparsers)
-
     args = parser.parse_args()
     if hasattr(args.__obj, '_setup'):
         getattr(args.__obj, '_setup')()
     getattr(args.__obj, args.command)(*args.params)
+
+
+if __name__ == "__main__":
+    main()
