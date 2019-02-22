@@ -6,7 +6,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = "0.3.0"
+version = "0.3.1"
 
 setup(
     name='zerophone_hw',
@@ -18,6 +18,7 @@ setup(
     install_requires=[
         "gpio"
     ],
-    url = 'https://github.com/ZeroPhone/Zerophone-API-Python',
-    download_url = 'https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version)
+    url='https://github.com/ZeroPhone/Zerophone-API-Python',
+    download_url='https://github.com/ZeroPhone/zerophone-api-py/archive/{}.tar.gz'.format(version),
+    entry_points={"console_scripts": ["zerophone_hw = zerophone_hw:main"]},
 )
