@@ -2,7 +2,7 @@
 import argparse
 
 __all__ = ['get_hw_version_str', 'Charger', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.3.0'
+__version__ = '0.3.2'
 
 import sys
 from copy import copy
