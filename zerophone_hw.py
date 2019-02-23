@@ -2,7 +2,7 @@
 import argparse
 
 __all__ = ['get_hw_version_str', 'Charger', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 
 import os
 import sys
@@ -90,7 +90,7 @@ class Version(object):
 
     def string(self):
         """Get the version string"""
-        if not self.version:
+        if not self.version or self.autodetect_failed:
             self.version = self.detect_version()
         return self.version
 
