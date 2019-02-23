@@ -2,8 +2,9 @@
 import argparse
 
 __all__ = ['get_hw_version_str', 'Charger', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
+import os
 import sys
 from copy import copy
 from time import sleep
@@ -18,10 +19,91 @@ sys.excepthook = sys.__excepthook__
 gpio.log.setLevel(gpio.logging.INFO)
 # Otherwise, a bunch of stuff is printed on the screen
 
+
+
+class Version(object):
+    """
+    This helps us understand the hardware version of the phone.
+    For now, it only supports a database stored on the SD card,
+    tied to the serial number of the phone.
+    """
+    version = None
+    version_db = "/etc/zphw.db"
+    cpuinfo_file = "/proc/cpuinfo"
+    default_version = "gamma"
+    serial_marker = "Serial"
+    autodetect_failed = True
+
+    def __init__(self):
+        pass
+
+    def read_database(self):
+        try:
+            with open(self.version_db, 'r') as f:
+                output = f.read()
+        except:
+            return {}
+        lines = output.split(os.linesep)
+        lines = [line.strip() for line in lines]
+        lines = list(filter(None, lines))
+        entries = dict([line.split(" ", 1) for line in lines])
+        return entries
+
+    def detect_version(self):
+        entries = self.read_database()
+        serial = self.get_serial()
+        if serial in entries:
+            self.autodetect_failed = False
+            return entries[serial]
+        else:
+            return self.default_version
+
+    def library(self):
+        return __version__
+
+    def set_version(self, version_str):
+        entries = self.read_database()
+        serial = self.get_serial()
+        lines = [" ".join(i) for i in entries.items()]
+        lines.append("{} {}".format(serial, version_str))
+        try:
+            with open(self.version_db, 'w') as f:
+                f.write(os.linesep.join(lines)+os.linesep)
+        except:
+            return False
+        else:
+            return True
+
+    def get_serial(self):
+        """Get the CPU serial number"""
+        with open(self.cpuinfo_file, 'r') as f:
+            output = f.read()
+        lines = output.split(os.linesep)
+        lines = [line.strip() for line in lines]
+        lines = list(filter(None, lines))
+        for line in lines:
+            if line.startswith(self.serial_marker):
+                x = line[len(self.serial_marker):]
+                serial = x.split(':')[-1].strip()
+                return serial
+        return None
+
+    def string(self):
+        """Get the version string"""
+        if not self.version:
+            self.version = self.detect_version()
+        return self.version
+
+    def version_unknown(self):
+        """Tells whether the version could be autodetermined"""
+        if not self.version:
+            self.version = self.detect_version()
+        return self.autodetect_failed
+
+hw_version = Version()
+
 def get_hw_version_str():
-    # Only version there is for now =)
-    # Next implementations will probably be getting version strings from onboard EEPROM
-    return "delta"
+    return hw_version.string()
 
 
 class Charger(object):
@@ -209,6 +291,7 @@ def main():
            dest="nonenduser",
            default=False)
     subparsers = parser.add_subparsers()
+    add_object_subparser(hw_version, 'version', subparsers)
     add_object_subparser(Charger(), 'charger', subparsers)
     add_object_subparser(RGB_LED(), 'led', subparsers)
     add_object_subparser(USB_DCDC(), 'dcdc', subparsers)
@@ -218,10 +301,13 @@ def main():
         getattr(args.__obj, '_setup')()
     if not args.nonenduser:
         print("------ NOT TO BE USED BY END-USERS, USE THE 'zp' API INSTEAD ------")
-    status = getattr(args.__obj, args.command)(*args.params)
-    if status is not None:
-        print(status)
-        sys.exit(status)
+    result = getattr(args.__obj, args.command)(*args.params)
+    if result is not None:
+        print(result)
+        if isinstance(result, (bool, int)):
+            sys.exit(result)
+        else:
+            sys.exit(0)
 
 
 if __name__ == "__main__":
