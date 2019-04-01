@@ -2,7 +2,7 @@
 import argparse
 
 __all__ = ['get_hw_version_str', 'Charger', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 import os
 import sys
@@ -221,7 +221,7 @@ class RGB_LED_Base(object):
         "none": (0, 0, 0)}
 
     def __init__(self):
-        pass
+        self._setup()
 
     def off(self):
         """Turns the led off"""
