@@ -2,7 +2,7 @@
 import argparse
 
 __all__ = ['get_hw_version_str', 'Charger', 'RGB_LED', 'USB_DCDC', "GSM_Modem"]
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 import os
 import sys
@@ -196,13 +196,19 @@ class GSM_Modem_Gamma(object):
 
 class GSM_Modem_Delta(GSM_Modem_Gamma):
     """SIM800L modem control for the delta board"""
-    gpio_nums = {"ring": 501, "dtr": 502, "reset": 496, "en": 500}
+    gpio_nums = {"ring": 501, "dtr": 502, "reset": 496, "en": 500, "speaker": 503}
 
     def enable_uart(self):
         self._set_state("en", False)
 
     def disable_uart(self):
         self._set_state("en", True)
+
+    def speaker_on(self):
+        self._set_state("speaker", True)
+
+    def speaker_off(self):
+        self._set_state("speaker", False)
 
 
 class RGB_LED(object):
